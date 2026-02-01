@@ -11,7 +11,7 @@ Ejemplo típico:
 """
 
 from __future__ import annotations
-
+import csv
 from pathlib import Path
 
 
@@ -33,29 +33,27 @@ def csv_average(path: str | Path, column: str) -> float:
 
     csv_average(..., "average") -> 8.0
     """
-    if not column or column.strip() == "":
-        raise ValueError("El nombre de la columna no puede estar vacío ni solo contener espacios.")
-
     path = Path(path)
-    if not path.exists():
-        raise FileNotFoundError(f"No existe el fichero: {path}")
 
-    with path.open("r", encoding="utf-8", newline="") as fichero:
-        lector = csv.DictReader(fichero)
-        if lector.fieldnames is None or column not in lector.fieldnames:
-            raise ValueError(f"La columna '{column}' no existe en el CSV.")
+    with path.open("r", encoding="utf-8", newline="") as f:
+        reader = csv.DictReader(f)
 
-        valores = []
-        for fila in lector:
-            valor_crudo = fila.get(column, "").strip()
+        if reader.fieldnames is None or column not in reader.fieldnames:
+            raise ValueError
+
+        total = 0.0
+        count = 0
+
+        for row in reader:
             try:
-                valor = float(valor_crudo)
-            except ValueError:
-                raise ValueError(f"Valor no numérico en la columna '{column}': {valor_crudo!r}")
-            valores.append(valor)
+                value = float(row[column])
+            except (TypeError, ValueError):
+                raise ValueError
+            total += value
+            count += 1
 
-        if not valores:
-            raise ValueError("El CSV no contiene filas de datos.")
+    if count == 0:
+        raise ValueError
 
-    return sum(valores) / len(valores)
+    return total / count
     raise NotImplementedError("Implementa csv_average(path, column)")
