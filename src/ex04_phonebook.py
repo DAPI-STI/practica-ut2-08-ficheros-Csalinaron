@@ -98,4 +98,68 @@ def remove_contact(path: str | Path, name: str) -> bool:
     Pista:
     - load -> borrar si existe -> save si cambió
     """
-    raise NotImplementedError("Implementa remove_contact(path, name)")
+    path = Path(path)
+    if not path.exists():
+        return {}
+
+    agenda: dict[str, str] = {}
+
+    with path.open("r", encoding="utf-8") as fichero:
+        for linea in fichero:
+            linea = linea.strip()
+            if not linea:
+                continue
+            partes = linea.split(",", 1)
+            if len(partes) != 2:
+                raise ValueError(f"Línea mal formada: {linea!r}")
+            nombre, telefono = partes
+            agenda[nombre.strip()] = telefono.strip()
+
+    return agenda
+
+
+def _save_phonebook(path: str | Path, phonebook: dict[str, str]) -> None:
+    path = Path(path)
+    with path.open("w", encoding="utf-8") as fichero:
+        for nombre, telefono in phonebook.items():
+            fichero.write(f"{nombre},{telefono}\n")
+
+
+def add_contact(path: str | Path, name: str, phone: str) -> None:
+    if not name or name.strip() == "":
+        raise ValueError("El nombre no puede estar vacío ni solo contener espacios.")
+    if not phone or phone.strip() == "":
+        raise ValueError("El teléfono no puede estar vacío ni solo contener espacios.")
+
+    lista = _load_phonebook(path)
+    lista[name.strip()] = phone.strip()
+    _save_phonebook(path, lista)
+
+
+def get_phone(path: str | Path, name: str) -> str | None:
+    if not name or name.strip() == "":
+        raise ValueError("El nombre no puede estar vacío ni solo contener espacios.")
+    path = Path(path)
+    if not path.exists():
+        return None
+
+    lista = _load_phonebook(path)
+    return lista.get(name.strip())
+
+
+def remove_contact(path: str | Path, name: str) -> bool:
+    if not name or name.strip() == "":
+        raise ValueError("El nombre no puede estar vacío ni solo contener espacios.")
+    path = Path(path)
+    if not path.exists():
+        return False
+
+    lista = _load_phonebook(path)
+    nombre_limpio = name.strip()
+
+    if nombre_limpio in lista:
+        del lista[nombre_limpio]
+        _save_phonebook(path, lista)
+        return True
+    else:
+        return False
